@@ -5,27 +5,33 @@ import {
   RouterStateSnapshot,
   CanActivateChild,
   NavigationExtras,
-  UrlTree
+  CanLoad, Route
 } from '@angular/router';
 import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class AuthGuard implements CanActivate, CanActivateChild {
+export class AuthGuard implements CanActivate, CanActivateChild, CanLoad {
   constructor(private authService: AuthService, private router: Router) {}
 
-  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): true|UrlTree {
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
     const url: string = state.url;
 
     return this.checkLogin(url);
   }
 
-  canActivateChild(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): true|UrlTree {
+  canActivateChild(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
     return this.canActivate(route, state);
   }
 
-  checkLogin(url: string): true|UrlTree {
+  canLoad(route: Route): boolean {
+    const url = `/${route.path}`;
+
+    return this.checkLogin(url);
+  }
+
+  checkLogin(url: string): boolean {
     if (this.authService.isLoggedIn) { return true; }
 
     // Store the attempted URL for redirecting
@@ -41,7 +47,15 @@ export class AuthGuard implements CanActivate, CanActivateChild {
       fragment: 'anchor'
     };
 
-    // Redirect to the login page with extras
-    return this.router.createUrlTree(['/login'], navigationExtras);
+    // Navigate to the login page with extras
+    this.router.navigate(['/login'], navigationExtras);
+    return false;
   }
 }
+
+
+/*
+Copyright Google LLC. All Rights Reserved.
+Use of this source code is governed by an MIT-style license that
+can be found in the LICENSE file at https://angular.io/license
+*/
